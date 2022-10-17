@@ -13,9 +13,14 @@ type PartytownOptions =
 			config?: {
 				forward?: string[];
 				debug?: boolean;
+				resolveUrl?: (url: URL, location: Location, type: string) => URL;
 			};
 	  }
 	| undefined;
+
+type PartytownSnippetType = {
+	lib: string, debug: boolean, forward: string[], resolveUrl?: (url: URL, location: Location, type: string) => URL
+}
 
 export default function createPlugin(options: PartytownOptions): AstroIntegration {
 	let config: AstroConfig;
@@ -29,7 +34,15 @@ export default function createPlugin(options: PartytownOptions): AstroIntegratio
 				const lib = `${_config.base}~partytown/`;
 				const forward = options?.config?.forward || [];
 				const debug = options?.config?.debug || command === 'dev';
-				partytownSnippetHtml = partytownSnippet({ lib, debug, forward });
+				const resolveUrl = options?.config?.resolveUrl;
+
+				let snippetOptions: PartytownSnippetType = { lib, debug, forward }
+
+				if (resolveUrl) {
+					snippetOptions = { lib, debug, forward, resolveUrl }
+				}
+
+				partytownSnippetHtml = partytownSnippet(snippetOptions);
 				injectScript('head-inline', partytownSnippetHtml);
 			},
 			'astro:config:done': ({ config: _config }) => {
